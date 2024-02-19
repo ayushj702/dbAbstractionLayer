@@ -13,6 +13,8 @@ class Query{
     private $fields;
     private $operation;
     private $conditions = [];
+    private static array $cache = [];
+    
 
     public function __construct(Database $db){
         $this->connection = $db->getConnection();
@@ -65,13 +67,24 @@ class Query{
         return $this->buildQuery();
     }
 
-    public function execute(): array {
+    public function execute(bool $useCache = true): array {
         $query = $this->buildQuery();
+
+        if ($useCache && isset(self::$cache[$query])) {
+            // If cached result exists, return it
+            return self::$cache[$query];
+        }
+
         if ($this->validateQuery($query)) {
             try {
                 $stmt = $this->connection->prepare($query);
                 $stmt->execute();
                 $results = $stmt->fetchAll(PDO::FETCH_ASSOC); //pdo fetch 
+
+                if ($useCache) {
+                    self::$cache[$query] = $results;
+                }
+    
                 return $results;
             } 
             catch (PDOException $e) {
