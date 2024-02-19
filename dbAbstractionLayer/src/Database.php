@@ -10,6 +10,7 @@ use dbAbstractionLayer\src\ApplicationSetting;
 class Database{
     private ApplicationSetting $setting;
     private $connection;
+    private array $cache = [];
 
     public function __construct(string $selection = 'default')
     {
@@ -38,5 +39,9 @@ class Database{
 
     public function getQuery(): Query {
         return new Query($this);
+    }
+
+    public function cacheQuery(string $query, array $result): void {
+        $this->cache[$query] = $result;
     }
 }
