@@ -1,12 +1,10 @@
 <?php
 
-namespace dbAbstractionLayer\src;
+namespace src;
 
 class ApplicationSetting{
-    public $databaseName = 'abslayer';
+    public $databaseName = 'classicmodels';
     public $host = 'localhost';
     public $username = 'root';
     public $password = '';
 }
-
-?>
