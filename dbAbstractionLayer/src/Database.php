@@ -1,11 +1,11 @@
 <?php
 
-namespace dbAbstractionLayer\src;
+namespace src;
 
-use dbAbstractionLayer\src\Query;
+use src\Query;
 use \PDO;
 use \PDOException; //abstraction class
-use dbAbstractionLayer\src\ApplicationSetting;
+use src\ApplicationSetting;
 
 class Database{
     private ApplicationSetting $setting;
@@ -39,3 +39,4 @@ class Database{
     public function getQuery(): Query {
         return new Query($this);
     }
+}
