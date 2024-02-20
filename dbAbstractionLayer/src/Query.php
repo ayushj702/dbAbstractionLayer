@@ -1,11 +1,11 @@
 <?php
 
-namespace dbAbstractionLayer\src;
+namespace src;
 
-use dbAbstractionLayer\src\Database;
+use src\Database;
 use \PDO;
 use \PDOException; //abstraction class
-use dbAbstractionLayer\src\Condition;
+use src\Condition;
 
 class Query{
     private $connection;
@@ -14,7 +14,9 @@ class Query{
     private $operation;
     private $conditions = [];
     private static array $cache = [];
-    
+    private $joinConditions = [];
+
+
 
     public function __construct(Database $db){
         $this->connection = $db->getConnection();
@@ -22,19 +24,32 @@ class Query{
 
     private function buildQuery(): string {
         $fields = $this->getFields();
-        $condition = $this->getCondition();
-        if($this->operation != 'UPDATE'){
-            $query = "$this->operation $fields FROM $this->tablename $condition";
-        }else{
-            //
+        $whereCondition = $this->getCondition();
+        $joinCondition = $this->getJoin();
+        if ($this->operation === 'DELETE') {
+            $query = "$this->operation FROM $this->tablename $whereCondition";
         }
-
+        elseif($this->operation != 'UPDATE'){
+            $query = "$this->operation $fields FROM $this->tablename $joinCondition $whereCondition";
+        }else{
+            //handle update query
+        }
         return $query;
     }
 
-    public function select(string $tablename): self {
-        $this->tablename = $tablename;
+    public function select(string $tableOrQuery): self {
+        if($tableOrQuery instanceof Query) {
+            $this->tablename = '(' . $tableOrQuery->__toString() . ')';
+        } else {
+            $this->tablename = $tableOrQuery;
+        }
         $this->operation = 'SELECT';
+        return $this;
+    }
+
+    public function delete(string $table): self {
+        $this->tablename = $table;
+        $this->operation = 'DELETE';
         return $this;
     }
 
@@ -61,12 +76,20 @@ class Query{
         return !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
     }
 
-    
+    public function join(string $table, string $clause, string $type = 'INNER'): self {
+        $this->joinConditions[] = "$type JOIN $table ON $clause";
+        return $this;
+    }
+
+    public function getJoin(): string {
+        return implode(' ', $this->joinConditions);
+    }
 
     public function __toString(): string {
         return $this->buildQuery();
     }
 
+    
     public function execute(bool $useCache = true): array {
         $query = $this->buildQuery();
 
